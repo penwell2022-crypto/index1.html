@@ -93,6 +93,8 @@ async function fetchFirst() {
 }
 
 async function loadData() {
+  $("status").className = "status loading";
+  $("status").textContent = "⏳ กำลังโหลดไฟล์ข้อมูล data/data.xlsx …";
   try {
     if (typeof XLSX === "undefined") throw new Error("โหลดตัวอ่าน Excel (SheetJS) ไม่สำเร็จ");
     ROWS = parseWorkbook(XLSX.read(await fetchFirst(), { type: "array" }));
@@ -293,5 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   loadData();
 });
+
 
 
