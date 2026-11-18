@@ -103,5 +103,16 @@
   <footer>ข้อมูลจากชีต AASYMA (สรุปจากแพทยศาสตร์สงเคราะห์ เล่ม 1–2) · หน้าเว็บอ่านไฟล์ Excel โดยตรง แก้ข้อมูลใน Excel แล้วอัปโหลดไฟล์ใหม่ หน้าเว็บจะอัปเดตตาม</footer>
 
   <script src="app.js"></script>
+  <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey && ['c','u','s'].includes(e.key.toLowerCase())) || e.key ==='F12' {
+        e.preventDefault();
+      }
+    });
+  </script>
+  <style>
+    body { user-select: none; -webkit-user-select: none; }  
+  </style>
 </body>
 </html>
