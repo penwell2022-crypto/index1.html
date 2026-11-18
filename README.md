@@ -30,38 +30,6 @@ LICENSE           ข้อกำหนดลิขสิทธิ์
 python -m http.server 8000
 # แล้วเปิด http://localhost:8000
 ```
+<img width="841" height="929" alt="image" src="https://github.com/user-attachments/assets/3d703155-fc34-4eff-8045-fa1b0b544638" />
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<img width="841" height="1886" alt="image" src="https://github.com/user-attachments/assets/cdf032cd-26d5-4be3-89aa-5deb896bf361" />
 
