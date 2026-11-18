@@ -5,7 +5,7 @@
    ข้อมูล: B=รหัส C=ชื่อ D=คำอธิบาย E=ระดับ F=ภาวะ G..Z=อาการ 1-20 (เริ่มแถว 3)
    ========================================================= */
 
-const DATA_URL = "data/data.xlsx";
+const DATA_URLS = ["data/data.xlsx", "data/aasyma.xlsx", "data.xlsx", "data/Data.xlsx"];
 const TABS = ["cards", "ladder", "map", "explore", "quiz"];
 
 // ธาตุหลัก (คำช่วยจำ = ตัวช่วยเรียนที่เพิ่มขึ้น ไม่ได้มาจากตำรา)
@@ -80,12 +80,23 @@ function parseWorkbook(wb) {
     }));
 }
 
+async function fetchFirst() {
+  const tried = [];
+  for (const url of DATA_URLS) {
+    try {
+      const res = await fetch(url, { cache: "no-cache" });
+      if (res.ok) return await res.arrayBuffer();
+      tried.push(url + " (" + res.status + ")");
+    } catch (e) { tried.push(url + " (" + e.message + ")"); }
+  }
+  throw new Error("ไม่พบไฟล์ข้อมูล: " + tried.join(", "));
+}
+
 async function loadData() {
   try {
-    const res = await fetch(DATA_URL, { cache: "no-cache" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    ROWS = parseWorkbook(XLSX.read(await res.arrayBuffer(), { type: "array" }));
-    if (!ROWS.length) throw new Error("no rows");
+    if (typeof XLSX === "undefined") throw new Error("โหลดตัวอ่าน Excel (SheetJS) ไม่สำเร็จ");
+    ROWS = parseWorkbook(XLSX.read(await fetchFirst(), { type: "array" }));
+    if (!ROWS.length) throw new Error("อ่านไฟล์ได้ แต่ไม่พบแถวข้อมูล (ต้องมีหัวคอลัมน์ ABCODE ที่ B1 และข้อมูลเริ่มแถว 3)");
     $("loader").hidden = true;
     $("app").hidden = false;
     renderCards(); renderLadder(); renderMap(); setupExplore(); newQuiz(); newDrag();
@@ -93,7 +104,7 @@ async function loadData() {
   } catch (e) {
     console.warn(e);
     $("status").className = "status err";
-    $("status").textContent = "⚠️ ยังโหลดข้อมูลไม่ได้ กรุณาลองใหม่ภายหลัง";
+    $("status").textContent = "⚠️ ยังโหลดข้อมูลไม่ได้ – " + e.message;
   }
 }
 
@@ -282,4 +293,5 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   loadData();
 });
+
 
