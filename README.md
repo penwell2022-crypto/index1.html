@@ -30,28 +30,38 @@ LICENSE           ข้อกำหนดลิขสิทธิ์
 python -m http.server 8000
 # แล้วเปิด http://localhost:8000
 ```
-<img width="841" height="929" alt="image" src="https://github.com/user-attachments/assets/e80acdfe-e6ac-4ee6-85ce-473c8e971272" />
 
-git add .
-git commit -m "AASYMA visual learning site"
-git branch -M main
-git remote add origin https://github.com/<ชื่อผู้ใช้>/<ชื่อ-repo>.git
-git push -u origin main
-```
 
-## อัปเดตข้อมูล
-แก้ข้อมูลในชีต AASYMA ใน Excel → อัปโหลด `data/aasyma.xlsx` ทับไฟล์เดิม → หน้าเว็บอัปเดตเอง
-(หรือลากไฟล์ Excel ไปวางบนหน้าเว็บเพื่อดูข้อมูลชั่วคราวได้ทันที โดยไม่ต้องอัปโหลด)
 
-## ทดสอบบนเครื่อง
-```bash
-python -m http.server 8000
-# แล้วเปิด http://localhost:8000
-```
-(การเปิด index.html ตรง ๆ แบบ double-click จะโหลด data/aasyma.xlsx ไม่ได้ ให้ใช้การลากไฟล์มาวางแทน)
 
-## หมายเหตุ
-- รูปแบบข้อมูล: ข้อมูลเริ่มแถว 3, คอลัมน์ B=รหัส, C=ชื่อ, D=คำอธิบาย, E=ระดับ, F=ภาวะ, G–Z=อาการ 1–20
-- "คำช่วยจำ" ในการ์ดเป็นตัวช่วยเรียนที่เพิ่มขึ้น ไม่ได้มาจากตำรา
-- ใช้ไลบรารี [SheetJS](https://sheetjs.com) อ่านไฟล์ Excel ในเบราว์เซอร์
-![Uploading image.png…]()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<img width="841" height="1886" alt="image" src="https://github.com/user-attachments/assets/cdf032cd-26d5-4be3-89aa-5deb896bf361" />
+
