@@ -1,3 +1,30 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="copyright" content="© 2026 [ชื่อผู้จัดทำ] สงวนลิขสิทธิ์" />
+  <title>แผนภาพธาตุ 4 – อาการแยกตามธาตุ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-top">
+      <h1>🧭 แผนภาพธาตุ 4 – อาการแยกตามธาตุ</h1>
+      <button id="copyLink" class="btn btn-link">🔗 คัดลอกลิงก์</button>
+    </div>
+    <nav>
+      <a href="#cards" data-tab="cards">① การ์ดธาตุ</a>
+      <a href="#ladder" data-tab="ladder">② บันไดความรุนแรง</a>
+      <a href="#map" data-tab="map">③ แผนที่กลุ่มธาตุ</a>
+      <a href="#explore" data-tab="explore">④ สำรวจเอง</a>
+      <a href="#quiz" data-tab="quiz">⑤ แบบทดสอบ</a>
+    </nav>
+  </header>
+
   <main>
     <section id="loader" class="card-box">
       <div id="status" class="status">⏳ กำลังโหลดข้อมูล …</div>
@@ -70,6 +97,18 @@
 
   <footer>ข้อมูลสรุปจากแพทยศาสตร์สงเคราะห์ เล่ม 1–2<br />© 2026 [ชื่อผู้จัดทำ] · สงวนลิขสิทธิ์ ห้ามคัดลอก ดัดแปลง หรือนำเนื้อหา/โค้ดไปเผยแพร่ซ้ำ · แชร์ได้เฉพาะลิงก์เพื่ออ่านทบทวน</footer>
 
+  <script>
+    window.addEventListener('error', function (e) {
+      var s = document.getElementById('status'); if (!s) return;
+      var t = e.target || {};
+      s.className = 'status err';
+      s.textContent = t.src ? ('⚠️ โหลดไฟล์ไม่ได้: ' + t.src) : ('⚠️ โค้ดผิดพลาด: ' + e.message + ' (' + String(e.filename || '').split('/').pop() + ' บรรทัด ' + e.lineno + ')');
+    }, true);
+    setTimeout(function () {
+      var s = document.getElementById('status');
+      if (s && s.className === 'status') { s.className = 'status err'; s.textContent = '⚠️ app.js ไม่ทำงาน – ตรวจว่ามีไฟล์ app.js (ตัวพิมพ์เล็ก) อยู่ในโฟลเดอร์หลักของ repo และคัดลอกโค้ดครบ'; }
+    }, 8000);
+  </script>
   <script src="app.js"></script>
   <script>
     document.addEventListener('contextmenu', e => e.preventDefault());
