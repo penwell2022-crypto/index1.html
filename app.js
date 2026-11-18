@@ -1,12 +1,12 @@
 /* =========================================================
-   แผนภาพธาตุ 4 (AASYMA) – Visual / Kinesthetic / Active Learning
-   อ่านข้อมูลจากชีต "AASYMA" ในไฟล์ Excel:
-     คอลัมน์ B=ABCODE, C=ABNAME, D=ABDESC, E=ABTYPE, F=ABSYNA, G..Z=ABS001..ABS020
-     แถว 1-2 = หัวตาราง/จำนวนหลัก, ข้อมูลเริ่มแถว 3
+   แผนภาพธาตุ 4 – อาการแยกตามธาตุ
+   © 2026 [ชื่อผู้จัดทำ] สงวนลิขสิทธิ์ (All rights reserved)
+   ห้ามคัดลอก ดัดแปลง หรือนำโค้ดไปใช้ต่อโดยไม่ได้รับอนุญาต
+   ข้อมูล: B=รหัส C=ชื่อ D=คำอธิบาย E=ระดับ F=ภาวะ G..Z=อาการ 1-20 (เริ่มแถว 3)
    ========================================================= */
 
-const DATA_URL = "data/aasyma.xlsx";
-const SHEET = "AASYMA";
+const DATA_URL = "data/data.xlsx";
+const TABS = ["cards", "ladder", "map", "explore", "quiz"];
 
 // ธาตุหลัก (คำช่วยจำ = ตัวช่วยเรียนที่เพิ่มขึ้น ไม่ได้มาจากตำรา)
 const ELEMENTS = [
@@ -19,19 +19,55 @@ const ELEMENTS = [
 const STAGES = ["หย่อน", "กำเริบ", "พิการ", "ออกจากกาย", "แตก", "ขาด"];
 const STAGE_COLORS = ["#FFF2CC", "#FFE699", "#F8CBAD", "#F4B183", "#E06666", "#990000"];
 
-let ROWS = []; // [{code,name,desc,level,condition,symptoms[]}]
+let ROWS = [];
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const realSymptoms = (r) => r.symptoms.filter((s) => s !== "/");
 const elementOf = (desc) => ELEMENTS.filter((e) => desc.includes(e.key));
+const asEl = (t) => (t && t.nodeType === 1 ? t : t && t.parentElement);
+
+/* ---------- ลดการคัดลอก (ยับยั้งผู้ใช้ทั่วไปได้ระดับหนึ่ง) ---------- */
+function protectPage() {
+  const isField = (t) => { const el = asEl(t); return el && el.closest("input, select, textarea"); };
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  ["copy", "cut"].forEach((ev) => document.addEventListener(ev, (e) => { if (!isField(e.target)) e.preventDefault(); }));
+  document.addEventListener("selectstart", (e) => { if (!isField(e.target)) e.preventDefault(); });
+  document.addEventListener("dragstart", (e) => { const el = asEl(e.target); if (!el || !el.closest(".dchip")) e.preventDefault(); });
+  document.addEventListener("keydown", (e) => {
+    const k = (e.key || "").toLowerCase(), ctrl = e.ctrlKey || e.metaKey;
+    if (e.key === "F12" || (ctrl && ["u", "s"].includes(k)) || (ctrl && e.shiftKey && ["i", "j", "c"].includes(k))) e.preventDefault();
+  });
+}
+
+/* ---------- คัดลอกลิงก์ ---------- */
+async function copyLink() {
+  const url = location.href;
+  try { await navigator.clipboard.writeText(url); toast("🔗 คัดลอกลิงก์แล้ว ส่งให้เพื่อนเปิดอ่านทบทวนได้เลย"); }
+  catch (e) { window.prompt("คัดลอกลิงก์นี้:", url); }
+}
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+/* ---------- แท็บเมนู ---------- */
+function showTab(id) {
+  if (!TABS.includes(id)) id = "cards";
+  document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === id));
+  document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.dataset.tab === id));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 /* ---------- โหลดข้อมูล ---------- */
+function findDataSheet(wb) {
+  const name = wb.SheetNames.find((n) => String((wb.Sheets[n]["B1"] || {}).v || "").trim().toUpperCase() === "ABCODE");
+  return wb.Sheets[name || wb.SheetNames[0]];
+}
+
 function parseWorkbook(wb) {
-  const ws = wb.Sheets[SHEET];
-  if (!ws) throw new Error(`ไม่พบชีต "${SHEET}" ในไฟล์`);
-  const grid = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+  const grid = XLSX.utils.sheet_to_json(findDataSheet(wb), { header: 1, defval: "" });
   return grid.slice(2)
     .filter((r) => String(r[1]).trim() !== "")
     .map((r) => ({
@@ -44,33 +80,21 @@ function parseWorkbook(wb) {
     }));
 }
 
-async function loadDefault() {
+async function loadData() {
   try {
-    const res = await fetch(DATA_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buf = await res.arrayBuffer();
-    start(parseWorkbook(XLSX.read(buf, { type: "array" })), DATA_URL);
+    const res = await fetch(DATA_URL, { cache: "no-cache" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    ROWS = parseWorkbook(XLSX.read(await res.arrayBuffer(), { type: "array" }));
+    if (!ROWS.length) throw new Error("no rows");
+    $("loader").hidden = true;
+    $("app").hidden = false;
+    renderCards(); renderLadder(); renderMap(); setupExplore(); newQuiz(); newDrag();
+    showTab(location.hash.slice(1));
   } catch (e) {
+    console.warn(e);
     $("status").className = "status err";
-    $("status").innerHTML = `⚠️ ยังโหลด <code>${DATA_URL}</code> ไม่ได้ (${esc(e.message)}) — ลากไฟล์ Excel มาวางด้านล่างได้เลย`;
+    $("status").textContent = "⚠️ ยังโหลดข้อมูลไม่ได้ กรุณาลองใหม่ภายหลัง";
   }
-}
-
-function loadFile(file) {
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try { start(parseWorkbook(XLSX.read(new Uint8Array(ev.target.result), { type: "array" })), file.name); }
-    catch (e) { $("status").className = "status err"; $("status").textContent = "⚠️ " + e.message; }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function start(rows, source) {
-  ROWS = rows;
-  $("status").className = "status ok";
-  $("status").innerHTML = `✅ โหลดข้อมูลแล้ว ${rows.length} ภาวะ จาก <code>${esc(source)}</code>`;
-  $("app").hidden = false;
-  renderCards(); renderLadder(); renderMap(); setupExplore(); newQuiz(); newDrag();
 }
 
 /* ---------- ① การ์ดธาตุ ---------- */
@@ -140,8 +164,7 @@ function renderMap() {
 
   const max = Math.max(...gs.map((g) => g.n));
   $("barChart").innerHTML = `<h4>จำนวนภาวะ/โรค ในแต่ละกลุ่มธาตุ</h4>` + gs.map((g) =>
-    `<div class="bar-row"><span>${esc(g.desc)}</span><div class="bar" style="width:0" data-w="${(g.n / max) * 100}%"></div><b>${g.n}</b></div>`).join("");
-  requestAnimationFrame(() => document.querySelectorAll(".bar").forEach((b) => (b.style.width = b.dataset.w)));
+    `<div class="bar-row"><span>${esc(g.desc)}</span><div class="bar" style="width:${(g.n / max) * 100}%"></div><b>${g.n}</b></div>`).join("");
 }
 
 /* ---------- ④ สำรวจเอง ---------- */
@@ -165,7 +188,7 @@ function renderExplore() {
   }).join("") || "<p>ไม่พบข้อมูล</p>";
 }
 
-/* ---------- ⑤ แบบทดสอบ ---------- */
+/* ---------- ⑤ แบบทดสอบ ก) เลือกตอบ ---------- */
 let quizState = { total: 0, right: 0 };
 
 function newQuiz() {
@@ -186,7 +209,7 @@ function newQuiz() {
       const ok = r.desc.includes(btn.dataset.k);
       const res = qEl.querySelector(".res");
       if (ok) {
-        if (!qEl.dataset.done) { quizState.right += qEl.dataset.tried ? 0 : 1; }
+        if (!qEl.dataset.done && !qEl.dataset.tried) quizState.right++;
         qEl.dataset.done = "1";
         res.className = "res ok"; res.innerHTML = `✅ ถูก! เฉลย: ${esc(r.condition)}`;
         qEl.querySelectorAll(".choice").forEach((b) => (b.disabled = true));
@@ -199,7 +222,7 @@ function newQuiz() {
   });
 }
 
-/* ---------- ⑥ ลากวางจับคู่ ---------- */
+/* ---------- ⑤ แบบทดสอบ ข) ลากวางจับคู่ ---------- */
 let selectedChip = null;
 
 function newDrag() {
@@ -208,13 +231,15 @@ function newDrag() {
     const syms = ROWS.filter((r) => r.code === e.code).flatMap((r) => realSymptoms(r).filter((s) => s.length > 3));
     return shuffle([...new Set(syms)]).slice(0, 2).map((s) => ({ s, key: e.key }));
   }));
+  selectedChip = null;
   $("dragScore").textContent = "–";
   $("dragPool").innerHTML = items.map((it, i) => `<span class="dchip" draggable="true" id="dc${i}" data-key="${it.key}">${esc(it.s)}</span>`).join("");
   $("buckets").innerHTML = main4.map((e) => `<div class="bucket" style="--c:${e.c};--l:${e.l}" data-key="${e.key}"><h4>${e.title}</h4></div>`).join("");
 
   document.querySelectorAll(".dchip").forEach((c) => {
     c.addEventListener("dragstart", (ev) => ev.dataTransfer.setData("text/plain", c.id));
-    c.addEventListener("click", () => {
+    c.addEventListener("click", (ev) => {
+      ev.stopPropagation();
       document.querySelectorAll(".dchip").forEach((x) => x.classList.remove("sel"));
       selectedChip = selectedChip === c ? null : c;
       if (selectedChip) c.classList.add("sel");
@@ -224,7 +249,7 @@ function newDrag() {
     b.addEventListener("dragover", (ev) => { ev.preventDefault(); b.classList.add("over"); });
     b.addEventListener("dragleave", () => b.classList.remove("over"));
     b.addEventListener("drop", (ev) => { ev.preventDefault(); b.classList.remove("over"); moveChip($(ev.dataTransfer.getData("text/plain")), b); });
-    b.addEventListener("click", (ev) => { if (selectedChip && ev.target === b || (selectedChip && ev.target.tagName === "H4")) moveChip(selectedChip, b); });
+    b.addEventListener("click", () => { if (selectedChip) moveChip(selectedChip, b); });
   });
 }
 
@@ -249,13 +274,12 @@ function checkDrag() {
 
 /* ---------- เริ่มต้น ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  const dz = $("dropzone");
-  $("fileInput").addEventListener("change", (e) => e.target.files[0] && loadFile(e.target.files[0]));
-  dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("over"); });
-  dz.addEventListener("dragleave", () => dz.classList.remove("over"));
-  dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("over"); e.dataTransfer.files[0] && loadFile(e.dataTransfer.files[0]); });
+  protectPage();
+  $("copyLink").onclick = copyLink;
   $("newQuiz").onclick = newQuiz;
   $("newDrag").onclick = newDrag;
   $("checkDrag").onclick = checkDrag;
-  loadDefault();
+  window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+  loadData();
 });
+
