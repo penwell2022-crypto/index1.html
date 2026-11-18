@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>แผนภาพธาตุ 4 – อาการแยกตามธาตุ (AASYMA)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- SheetJS: อ่านไฟล์ Excel (.xlsx) ในเบราว์เซอร์ -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>🧭 แผนภาพธาตุ 4 – อาการแยกตามธาตุ (AASYMA)</h1>
+    <p class="tagline">ดู 👀 • ลงมือ ✋ • ทดสอบ 🧠 — เรียนแบบ Visual · Kinesthetic · Active Learning</p>
+    <nav>
+      <a href="#cards">① การ์ดธาตุ</a>
+      <a href="#ladder">② บันไดความรุนแรง</a>
+      <a href="#map">③ แผนที่กลุ่มธาตุ</a>
+      <a href="#explore">④ สำรวจเอง</a>
+      <a href="#quiz">⑤ แบบทดสอบ</a>
+      <a href="#drag">⑥ ลากวางจับคู่</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- แหล่งข้อมูล -->
+    <section id="loader" class="card-box">
+      <div id="status" class="status">⏳ กำลังโหลดข้อมูลจาก <code>data/aasyma.xlsx</code> …</div>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls" hidden />
+        📂 ลากไฟล์ Excel (ที่มีชีต <b>AASYMA</b>) มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์
+      </label>
+    </section>
+
+    <div id="app" hidden>
+      <!-- ① การ์ดธาตุ -->
+      <section id="cards">
+        <h2>① การ์ดธาตุ – ภาพรวมแต่ละธาตุ <small>(คลิกการ์ดเพื่อไปสำรวจ)</small></h2>
+        <div class="cards" id="cardGrid"></div>
+        <p class="note">* จำนวนช่องอาการ = ช่องที่ไม่ว่างและไม่ใช่ “/” (บางช่องในตำราเป็นคำแยกท่อน จึงเป็นค่าประมาณ) · 🔑 คำช่วยจำ = ตัวช่วยเรียนที่เพิ่มขึ้น ไม่ได้มาจากตำรา</p>
+      </section>
+
+      <!-- ② บันไดความรุนแรง -->
+      <section id="ladder">
+        <h2>② บันไดความรุนแรง – ธาตุเปลี่ยนสภาพจากเบาไปหนัก <small>(คลิกช่องเพื่อดูอาการทั้งหมด)</small></h2>
+        <div class="table-wrap"><table class="ladder" id="ladderTable"></table></div>
+      </section>
+
+      <!-- ③ แผนที่กลุ่มธาตุ -->
+      <section id="map">
+        <h2>③ แผนที่กลุ่มธาตุ – ธาตุไหนจับคู่กับธาตุไหน</h2>
+        <div class="map-layout">
+          <div class="table-wrap"><table class="map" id="mapTable"></table></div>
+          <div class="chart" id="barChart"></div>
+        </div>
+        <p class="note">ระดับ: S1 = ธาตุเดียว • S2 = 2 ธาตุ • S3 = 3 ธาตุ • S4 = ทั้ง 4 ธาตุ (ยิ่งสีเข้ม ยิ่งซับซ้อน)</p>
+      </section>
+
+      <!-- ④ สำรวจเอง -->
+      <section id="explore">
+        <h2>④ สำรวจเอง ✋</h2>
+        <div class="controls">
+          <label>👉 เลือกกลุ่ม <select id="groupSelect"></select></label>
+          <label>🔎 ค้นหาอาการ <input id="searchBox" type="search" placeholder="เช่น วิงเวียน, ร้อน, ไอ" /></label>
+          <span id="exploreCount" class="pill"></span>
+        </div>
+        <div id="exploreList" class="explore-list"></div>
+      </section>
+
+      <!-- ⑤ แบบทดสอบ -->
+      <section id="quiz">
+        <h2>⑤ แบบทดสอบ 🧠 – อ่านอาการบอกใบ้ แล้วกดเลือกธาตุ</h2>
+        <div class="controls">
+          <button id="newQuiz" class="btn">🔀 สุ่มโจทย์ใหม่</button>
+          <span class="score">🏆 คะแนน <b id="quizScore">0 / 0</b></span>
+        </div>
+        <div id="quizList"></div>
+      </section>
+
+      <!-- ⑥ ลากวางจับคู่ -->
+      <section id="drag">
+        <h2>⑥ ลากวางจับคู่ 🖐️ – ลากอาการไปใส่ธาตุที่ถูกต้อง <small>(มือถือ: แตะอาการ แล้วแตะกล่องธาตุ)</small></h2>
+        <div class="controls">
+          <button id="newDrag" class="btn">🔀 สุ่มชุดใหม่</button>
+          <button id="checkDrag" class="btn btn-primary">✔️ ตรวจคำตอบ</button>
+          <span class="score">ผล: <b id="dragScore">–</b></span>
+        </div>
+        <div id="dragPool" class="pool"></div>
+        <div id="buckets" class="buckets"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- กล่องรายละเอียด -->
+  <dialog id="detail">
+    <h3 id="detailTitle"></h3>
+    <div id="detailBody" class="chips"></div>
+    <button class="btn" onclick="document.getElementById('detail').close()">ปิด</button>
+  </dialog>
+
+  <footer>ข้อมูลจากชีต AASYMA (สรุปจากแพทยศาสตร์สงเคราะห์ เล่ม 1–2) · หน้าเว็บอ่านไฟล์ Excel โดยตรง แก้ข้อมูลใน Excel แล้วอัปโหลดไฟล์ใหม่ หน้าเว็บจะอัปเดตตาม</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
